@@ -7,6 +7,8 @@ public class PlayerController : MonoBehaviour
 {
     private CharacterController playerCC;
 
+    [Header("KeyCodes",order =0)]
+
     public KeyCode UpKeyCode;
     public KeyCode DownKeyCode;
     public KeyCode LeftKeyCode;
@@ -14,26 +16,25 @@ public class PlayerController : MonoBehaviour
     public KeyCode RunKeyCode;
     public KeyCode PassKeyCode;
     public KeyCode JumpKeyCode;
-
-    private GameObject ball;
-
+    public KeyCode DashKeyCode;
 
 
+
+    [Header("Speed")]
 
     public float l_Speed;
     public float m_RunSpeed;
     private float iniSpeed;
-
     public float JumpSpeed;
-
     private float verticalSpeed;
-
     public bool OnGround;
 
     private GameObject m_CurrentPlatform;
 
 
     //For DASH
+    [Header("Dash")]
+
     public Vector3 moveDirection;
     public float maxDashTime;
     private float dashSpeed;
@@ -53,13 +54,14 @@ public class PlayerController : MonoBehaviour
 
     //public GameController gameControler;
 
+    [Header("Bools")]
 
     public bool canMove;
     public bool canAttack;
 
     CollisionFlags l_CollisionFlags;
 
-
+    [Header("Attaching")]
     public GameObject m_AttachingPosition;
     public bool m_AttachedObject;
     private Rigidbody m_ObjectAttached;
@@ -70,29 +72,37 @@ public class PlayerController : MonoBehaviour
 
     //public RestartGame resetController;
 
-    private bool onLava;
-
     public Vector3 respawnPosition;
 
     Renderer rend;
+    [Header("Camera")]
 
-    private bool hasBall;
 
+    public Camera cam;
     public Camera_Controller noBallCC;
     public Camera_Controller_3rdPerson hasBallCC;
 
+
+    [Header("Ball")]
+
+    private GameObject ball;
+    private bool hasBall;
     private Rigidbody ballRb;
-
-
     float speedX = 600f;
     float speedY = 400f;
+    private bool hasLostBall;
+    public float ballLeftTimer;
+
+    [Header("Push")]
+
 
     bool startPushEnemyTimer;
-    float pushHitTimer = 2f;
-    float pushSpeed=5f;
+    public float pushHitTimer = 2f;
+    public float pushSpeed=5f;
     public CharacterController enemyCC;
 
-    public Camera cam;
+
+
 
     // Use this for initialization
     void Start()
@@ -151,7 +161,7 @@ public class PlayerController : MonoBehaviour
         {
             hasBallCC.enabled = true;
             noBallCC.enabled = false;
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyDown(PassKeyCode))
             {
                 Vector3 direction = Camera.main.transform.forward;
                 ball.transform.parent = null;
@@ -284,6 +294,8 @@ public class PlayerController : MonoBehaviour
 
         }
 
+        Debug.Log(playerCC.velocity.magnitude);
+
     }
 
     //private void OnTriggerEnter(Collider other)
@@ -302,6 +314,21 @@ public class PlayerController : MonoBehaviour
     //        }
     //    }
     //}
+    private bool canGrabBall()
+    { 
+            ballLeftTimer -= Time.deltaTime;
+            if (ballLeftTimer >= 0)
+            {
+                return false;
+            }
+            else
+            {
+                ballLeftTimer = .2f;
+                return true;
+            }
+        
+    }
+
     public void OnControllerColliderHit(ControllerColliderHit hit)
     {
         //PlayerController pc = hit.gameObject.GetComponent<PlayerController>();
@@ -340,14 +367,13 @@ public class PlayerController : MonoBehaviour
             if (hasBall)
             {
                 ball.transform.parent = null;
-
                 ball.GetComponent<Rigidbody>().isKinematic = false;
-                ball.GetComponent<Rigidbody>().AddForce(Vector3.up * 200f);
+                ball.GetComponent<Rigidbody>().AddRelativeForce(Vector3.up * 200f);
                 hasBall = false;
             }
         }
 
-        if (hit.gameObject.tag == "ball")
+        if (hit.gameObject.tag == "ball" && canGrabBall())
         {
             hasBall = true;
             ball.GetComponent<Rigidbody>().isKinematic = true;
@@ -366,9 +392,9 @@ public class PlayerController : MonoBehaviour
 
         if (totalDashes != 0)
         {
+            
 
-
-            if (Input.GetKeyDown(KeyCode.Z) && dashCooldownBool == false)
+            if (Input.GetKeyDown(DashKeyCode) && dashCooldownBool == false)
             {
                 currentDashTime = 0.0f;
                 currentDashCooldown = 0.0f;
